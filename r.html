@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Text ⇄ Emoji Converter with Live & Themes</title>
+  <style>
+    /* Light Theme (default) */
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 50px 20px;
+      text-align: center;
+      color: #333;
+      background: linear-gradient(-45deg, #a1c4fd, #c2e9fb, #ff9a9e, #fad0c4);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+      transition: background 0.6s, color 0.6s;
+    }
+    @keyframes gradientBG {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    /* Dark Theme */
+    body.dark {
+      background: linear-gradient(-45deg, #1e1e2f, #2a2a3e, #12121c, #252535);
+      color: #eee;
+    }
+
+    h1 {
+      margin-bottom: 30px;
+      font-size: 36px;
+    }
+    textarea {
+      width: 80%;
+      max-width: 700px;
+      height: 100px;
+      font-size: 18px;
+      padding: 10px;
+      border: none;
+      border-radius: 10px;
+      resize: none;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      transition: background-color 0.3s, color 0.3s;
+    }
+    body.dark textarea {
+      background-color: #333;
+      color: #eee;
+      box-shadow: 0 4px 8px rgba(255, 255, 255, 0.2);
+    }
+
+    button {
+      margin: 10px 5px;
+      padding: 12px 25px;
+      font-size: 16px;
+      font-weight: bold;
+      border: none;
+      border-radius: 30px;
+      background: #ffffff;
+      color: #333;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      user-select: none;
+    }
+    button:hover {
+      background: #f1f1f1;
+      transform: scale(1.05);
+    }
+    body.dark button {
+      background: #555;
+      color: #eee;
+      box-shadow: 0 4px 12px rgba(255, 255, 255, 0.2);
+    }
+    body.dark button:hover {
+      background: #777;
+    }
+
+    .output {
+      margin-top: 25px;
+      font-size: 24px;
+      background: #ffffffcc;
+      color: #333;
+      padding: 20px;
+      border-radius: 10px;
+      display: inline-block;
+      min-width: 50%;
+      max-width: 700px;
+      word-wrap: break-word;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      white-space: pre-wrap;
+      text-align: left;
+      transition: background-color 0.3s, color 0.3s;
+      user-select: text;
+    }
+    /* Copy button active animation */
+button:active.copying {
+  transform: scale(0.95);
+  background-color: #4caf50 !important;
+  color: white !important;
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.8);
+  transition: background-color 0.3s ease, transform 0.1s ease;
+}
+
+/* Tooltip style */
+#copyTooltip {
+  display: inline-block;
+  margin-left: 10px;
+  font-size: 16px;
+  color: #4caf50;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  user-select: none;
+  font-weight: bold;
+}
+
+#copyTooltip.show {
+  opacity: 1;
+}
+
+    body.dark .output {
+      background: #222222cc;
+      color: #eee;
+      box-shadow: 0 4px 12px rgba(255, 255, 255, 0.2);
+    }
+
+    .letter-emoji {
+      font-size: 22px;
+      display: inline-block;
+      margin: 0 1px;
+      opacity: 0.8;
+    }
+
+    #modeLabel {
+      display: block;
+      margin-top: 15px;
+      font-size: 18px;
+      font-weight: bold;
+      user-select: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>📝 Text ⇄ Emoji Converter 😄</h1>
+  <textarea id="inputText" placeholder="Type something..."></textarea><br />
+  <button id="copyBtn">📋 Copy</button>
+  <span id="copyTooltip">Copied!</span>
+
+  <button id="clearBtn">🧹 Clear</button>
+  <button id="toggleModeBtn">🔁 Switch to Emoji ➡️ Text</button>
+  <button id="toggleThemeBtn">🌙 Dark Mode</button>
+  <span id="modeLabel">Current Mode: Text ➡️ Emoji</span>
+  <div class="output" id="emojiOutput">🔠 Result will appear here...</div>
+
+  <script>
+    // Emoji dictionary expanded
+    const emojiMap = {
+      hello: "👋",
+      love: "❤️",
+      cat: "🐱",
+      dog: "🐶",
+      happy: "😊",
+      sad: "😢",
+      fire: "🔥",
+      cool: "😎",
+      party: "🎉",
+      food: "🍕",
+      sun: "☀️",
+      moon: "🌙",
+      heart: "💖",
+      smile: "😄",
+      laugh: "😂",
+      music: "♪",
+      rain: "🌧️",
+      fun: "🎈",
+      star: "⭐",
+      angry: "😠",
+      coffee: "☕",
+      cake: "🍰",
+      car: "🚗",
+      bye: "👋🏻",
+      yes: "👍",
+      no: "👎",
+      okay: "👌",
+      hug: "🤗",
+      wink: "😉",
+      cry: "😭",
+      money: "💰",
+      cool2: "🆒",
+      love_you: "😘",
+      and: "&",
+    };
+
+    // Lowercase alphabet to emoji map
+    const lowercaseMap = {
+      a: "😁", b: "🙂", c: "🌜", d: "🌛", e: "🎗️", f: "🎏", g: "🌀",
+      h: "♓", i: "🎐", j: "🎷", k: "🎋", l: "👢", m: "〽", n: "🎵",
+      o: "⚽", p: "‽", q: "¶", r: "🌱", s: "💲", t: "🌴", u: "⛎",
+      v: "✅", w: "₩", x: "❌", y: "🍸", z: "💤"
+    };
+
+    // Uppercase alphabet to emoji map (different from lowercase)
+    const uppercaseMap = {
+      A: "🙏", B: "ɞ", C: "🌚", D: "🌝", E: "🎗", F: "🎏", G: "🎮",
+      H: "♓️", I: "‖", J: "🕹️", K: "🎋", L: "👢", M: "〽️", N: "🎶",
+      O: "⚾", P: "⁋", Q: "🍳", R: "🌳", S: "💲", T: "🌵", U: "⛎",
+      V: "✔️", W: "🔱", X: "❎", Y: "🍹", Z: "💤"
+    };
+
+    // Utility: Reverse map for emoji-to-text conversion (for emojiMap only)
+    function createReverseMap(map) {
+      // Sort by emoji length descending to avoid partial replacements
+      return Object.entries(map)
+        .sort((a, b) => b[1].length - a[1].length)
+        .reduce((acc, [k, v]) => {
+          acc[v] = k;
+          return acc;
+        }, {});
+    }
+
+    const reverseEmojiMap = createReverseMap(emojiMap);
+
+    // Combine uppercase and lowercase maps for reverse alphabet map
+    const combinedAlphabetMap = {...lowercaseMap, ...uppercaseMap};
+    const reverseAlphabetMap = createReverseMap(combinedAlphabetMap);
+
+    // State flags
+    let isEmojiToText = false;
+
+    // DOM Elements
+    const input = document.getElementById("inputText");
+    const output = document.getElementById("emojiOutput");
+    const copyBtn = document.getElementById("copyBtn");
+    const clearBtn = document.getElementById("clearBtn");
+    const toggleModeBtn = document.getElementById("toggleModeBtn");
+    const toggleThemeBtn = document.getElementById("toggleThemeBtn");
+    const modeLabel = document.getElementById("modeLabel");
+    const body = document.body;
+
+    // Clean word for matching
+    function cleanWord(word) {
+      return word.replace(/[.,!?;:()"]/g, "").toLowerCase();
+    }
+
+    // Convert word to emojis by letter with case sensitivity
+    function wordToAlphabetEmojis(word) {
+      return word.split("").map(char => {
+        if (uppercaseMap[char]) {
+          return `<span class="letter-emoji">${uppercaseMap[char]}</span>`;
+        } else if (lowercaseMap[char]) {
+          return `<span class="letter-emoji">${lowercaseMap[char]}</span>`;
+        } else {
+          return char;
+        }
+      }).join("");
+    }
+
+    // Text to Emoji converter
+    function convertTextToEmoji(text) {
+      if (!text.trim()) return "";
+      const words = text.trim().split(/\s+/);
+      const converted = words.map(word => {
+        const cleaned = cleanWord(word);
+        // Match whole word emoji first
+        if (emojiMap[cleaned]) {
+          return emojiMap[cleaned];
+        } else {
+          // Otherwise letter by letter emojis with case sensitivity
+          return wordToAlphabetEmojis(word);
+        }
+      });
+      return converted.join(" ");
+    }
+
+    // Escape regex special chars for emoji search
+    function escapeRegExp(string) {
+      return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+    // Emoji to Text converter
+    function convertEmojiToText(text) {
+      if (!text.trim()) return "";
+      let result = text;
+
+      // Replace whole word emojis first
+      for (const emoji of Object.keys(reverseEmojiMap)) {
+        const word = reverseEmojiMap[emoji];
+        const re = new RegExp(escapeRegExp(emoji), "g");
+        result = result.replace(re, word);
+      }
+
+      // Replace letter emojis next
+      for (const emoji of Object.keys(reverseAlphabetMap)) {
+        const letter = reverseAlphabetMap[emoji];
+        const re = new RegExp(escapeRegExp(emoji), "g");
+        result = result.replace(re, letter);
+      }
+
+      return result;
+    }
+
+    // Update output based on current mode
+    function updateOutput() {
+      const inputText = input.value;
+      if (!inputText.trim()) {
+        output.innerHTML = "🔠 Result will appear here...";
+        return;
+      }
+      if (isEmojiToText) {
+        const result = convertEmojiToText(inputText);
+        output.textContent = result || "🔠 Result will appear here...";
+      } else {
+        const result = convertTextToEmoji(inputText);
+        output.innerHTML = result || "🔠 Result will appear here...";
+      }
+    }
+
+    // Copy output text to clipboard
+    copyBtn.addEventListener("click", () => {
+      let textToCopy = output.textContent.trim();
+      if (!textToCopy || textToCopy.includes("Result will appear")) {
+        // Optional: show tooltip with error message briefly
+        showTooltip("Nothing to copy!", true);
+        return;
+      }
+
+      // Try Clipboard API
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(textToCopy).then(() => {
+          showTooltip("Copied!");
+          animateCopyButton();
+        }).catch(() => {
+          fallbackCopy(textToCopy);
+        });
+      } else {
+        fallbackCopy(textToCopy);
+      }
+    });
+
+    // Fallback for older browsers
+    function fallbackCopy(text) {
+      const temp = document.createElement("textarea");
+      temp.value = text;
+      temp.style.position = "fixed";
+      temp.style.left = "-9999px";
+      document.body.appendChild(temp);
+      temp.select();
+
+      try {
+        const successful = document.execCommand("copy");
+        if (successful) {
+          showTooltip("Copied!");
+          animateCopyButton();
+        } else {
+          showTooltip("Failed to copy!", true);
+        }
+      } catch {
+        showTooltip("Failed to copy!", true);
+      }
+
+      document.body.removeChild(temp);
+    }
+
+    // Show tooltip with message, error = red color
+    function showTooltip(message, error = false) {
+      copyTooltip.textContent = message;
+      copyTooltip.style.color = error ? "#e53935" : "#4caf50";
+      copyTooltip.classList.add("show");
+      setTimeout(() => {
+        copyTooltip.classList.remove("show");
+      }, 2000);
+    }
+
+    // Animate button: add 'copying' class briefly
+    function animateCopyButton() {
+      copyBtn.classList.add("copying");
+      copyBtn.disabled = true;
+      setTimeout(() => {
+        copyBtn.classList.remove("copying");
+        copyBtn.disabled = false;
+      }, 800);
+    }
+
+    // Clear input and output
+    clearBtn.addEventListener("click", () => {
+      input.value = "";
+      output.innerHTML = "🔠 Result will appear here...";
+      input.focus();
+    });
+
+    // Toggle conversion mode: Text->Emoji or Emoji->Text
+    toggleModeBtn.addEventListener("click", () => {
+      isEmojiToText = !isEmojiToText;
+      if (isEmojiToText) {
+        toggleModeBtn.textContent = "🔁 Switch to Text ➡️ Emoji";
+        modeLabel.textContent = "Current Mode: Emoji ➡️ Text";
+        // Optionally clear output or input
+        // output.innerHTML = "🔠 Result will appear here...";
+      } else {
+        toggleModeBtn.textContent = "🔁 Switch to Emoji ➡️ Text";
+        modeLabel.textContent = "Current Mode: Text ➡️ Emoji";
+      }
+      updateOutput();
+      input.focus();
+    });
+
+    // Toggle dark mode
+    toggleThemeBtn.addEventListener("click", () => {
+      body.classList.toggle("dark");
+      if (body.classList.contains("dark")) {
+        toggleThemeBtn.textContent = "☀️ Light Mode";
+      } else {
+        toggleThemeBtn.textContent = "🌙 Dark Mode";
+      }
+    });
+
+    // Update output as user types
+    input.addEventListener("input", updateOutput);
+
+    // Tooltip span
+    const copyTooltip = document.getElementById("copyTooltip");
+
+    // Initial placeholder output text
+    output.innerHTML = "🔠 Result will appear here...";
+  </script>
+</body>
+</html>
